@@ -152,18 +152,18 @@ class SeqGrowGraph(MVXTwoStageDetector):
             # Stage III specific freezing logic
             elif lane_diffusion_stage == 'stage_iii':
                 print("🔒 Stage III: Freezing LPIM and LPDM. Training Decoder with enhanced features.")
-                # Freeze LPIM and LPDM
-                for p in self.lane_diffusion.parameters():
+                # Freeze LPIM and LPDM weights only
+                for p in self.lane_diffusion.lpim.parameters():
                     p.requires_grad = False
+                for p in self.lane_diffusion.lpdm.parameters():
+                    p.requires_grad = False
+                # Allow Lane Prior Refinement to keep learning
+                for p in self.lane_diffusion.lpr.parameters():
+                    p.requires_grad = True
                 # Unfreeze everything else (Backbone, Neck, Decoder, etc.)
-                for p in self.parameters():
-                    # Skip lane_diffusion parameters (already frozen above)
-                    if 'lane_diffusion' not in str(p):
-                        p.requires_grad = True
-                
-                # Double check lane_diffusion is frozen
-                for p in self.lane_diffusion.parameters():
-                    p.requires_grad = False
+                for module_name, module_param in self.named_parameters():
+                    if not module_name.startswith("lane_diffusion."):
+                        module_param.requires_grad = True
         else:
             self.lane_diffusion = None
             self.bev_mask_adapter = None
@@ -551,17 +551,11 @@ class SeqGrowGraph(MVXTwoStageDetector):
         
         # 2. Initial Coarse Prediction (Standard Generation)
         # We use the LaneDiffusion model to get an initial enhanced BEV
-        enhanced_bev_initial, _ = self.lane_diffusion(raw_bev)
-        
-        # Predict tokens using the initial enhanced features
-        # Note: simple_test_pts expects concatenated features if mask is present, 
-        # but here we just want the prediction. 
-        # LaneDiffusion returns (enhanced_bev, seg_mask).
-        # We should handle seg_mask if it's returned.
-        if isinstance(enhanced_bev_initial, tuple):
-             enhanced_bev_initial, seg_mask_initial = enhanced_bev_initial
+        ld_out = self.lane_diffusion(raw_bev)
+        if isinstance(ld_out, tuple):
+            enhanced_bev_initial, seg_mask_initial = ld_out
         else:
-             seg_mask_initial = None
+            enhanced_bev_initial, seg_mask_initial = ld_out, None
              
         coarse_results = self.simple_test_pts(enhanced_bev_initial, img_metas, seg_mask=seg_mask_initial)
         
