@@ -67,37 +67,49 @@ class LaneDiffusion(nn.Module):
         
         if stage == 'stage_i':
             # Train LPIM only
+            self.lpim.train()
             for param in self.lpim.parameters():
                 param.requires_grad = True
+            self.lpdm.eval()
             for param in self.lpdm.parameters():
                 param.requires_grad = False
+            self.lpr.eval()
             for param in self.lpr.parameters():
                 param.requires_grad = False
                 
         elif stage == 'stage_ii':
             # Train LPDM only (freeze LPIM)
+            self.lpim.eval()
             for param in self.lpim.parameters():
                 param.requires_grad = False
+            self.lpdm.train()
             for param in self.lpdm.parameters():
                 param.requires_grad = True
+            self.lpr.eval()
             for param in self.lpr.parameters():
                 param.requires_grad = False
                 
         elif stage == 'stage_iii':
             # Freeze both LPIM and LPDM (decoder will be trained in main model)
+            self.lpim.eval()
             for param in self.lpim.parameters():
                 param.requires_grad = False
+            self.lpdm.eval()
             for param in self.lpdm.parameters():
                 param.requires_grad = False
+            self.lpr.train()
             for param in self.lpr.parameters():
                 param.requires_grad = True
                 
         elif stage == 'inference':
             # Freeze all
+            self.lpim.eval()
             for param in self.lpim.parameters():
                 param.requires_grad = False
+            self.lpdm.eval()
             for param in self.lpdm.parameters():
                 param.requires_grad = False
+            self.lpr.eval()
             for param in self.lpr.parameters():
                 param.requires_grad = False
     
