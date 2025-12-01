@@ -87,6 +87,7 @@ class LPDM(nn.Module):
         eta_interp = eta[1] + (eta[T] - eta[1]) * (1 - torch.cos(t_vals * np.pi / 2))
         
         eta = eta_interp ** 2 # Square it as per original logic
+        eta[0] = 0.0  # ensure boundary condition eta_0 = 0 for proper reverse step
         
         return eta
     
