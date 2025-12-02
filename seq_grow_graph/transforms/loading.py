@@ -823,6 +823,11 @@ class TransformGraph2Seq(object):
         centerline_sequence=self.seqlist2seq_with_start(centerline_sequence_list)
         results['centerline_sequence'] = centerline_sequence
         results['n_control'] = self.n_control
+        
+        # Add centerline_coord (Metric coordinates) for SegHead training
+        if 'center_lines' in results:
+             results['centerline_coord'] = results['center_lines'].centerlines
+             
         return results
     
     
@@ -1352,6 +1357,29 @@ class LoadNusOrderedBzCenterline(object):
         repr_str = self.__class__.__name__
         return repr_str
 
+
+@TRANSFORMS.register_module()
+class RecordCenterLines(object):
+    """Keep a numpy-friendly copy of raw center lines for meta storage."""
+
+    def __call__(self, results):
+        center_lines = results.get('center_lines', None)
+        lane_list = None
+        if center_lines is not None:
+            if isinstance(center_lines, dict):
+                lane_list = center_lines.get('centerlines', None)
+            else:
+                lane_list = getattr(center_lines, 'centerlines', None)
+        if lane_list is None:
+            results['center_lines_meta'] = []
+            return results
+
+        processed = []
+        for lane in lane_list:
+            lane_arr = np.asarray(lane, dtype=np.float32)
+            processed.append(lane_arr[:, :2] if lane_arr.ndim == 2 else lane_arr)
+        results['center_lines_meta'] = processed
+        return results
 
 
 @TRANSFORMS.register_module()

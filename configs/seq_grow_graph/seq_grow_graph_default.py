@@ -11,8 +11,8 @@ load_from = "ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth"
 
 data_root = "./data/nuscenes/"
 work_dir="work_dirs/seq_grow_graph"
-vis_dir = "seq_grow_graph"
-# resume= True 
+vis_dir = "seq_grow_graph_s3_v3_ep10"
+resume= True 
 transformer_dims = 256
 transformer_layers = 6
 head_dims = 32
@@ -220,6 +220,7 @@ train_pipeline = [
         grid_conf=grid_conf,
         bz_grid_conf=bz_grid_conf,
     ),
+    dict(type="RecordCenterLines"),
     dict(type="CenterlineFlip", prob=0.5),
     dict(
         type="CenterlineRotateScale",
@@ -254,6 +255,7 @@ train_pipeline = [
             "centerline_sequence",
             "lidar2ego",
             "n_control",
+            "center_lines_meta",
         ),
     ),
 ]
@@ -268,6 +270,7 @@ test_pipeline = [
         grid_conf=grid_conf,
         bz_grid_conf=bz_grid_conf,
     ),
+    dict(type="RecordCenterLines"),
     dict(type="TransformGraph2Seq", n_control=3, orderedDFS=True),
     dict(
         type="Pack3DDetInputs",
@@ -295,6 +298,7 @@ test_pipeline = [
             "centerline_sequence",
             "lidar2ego",
             "n_control",
+            "center_lines_meta",
         ),
     ),
 ]
@@ -438,7 +442,7 @@ default_hooks = dict(
     timer=dict(type="IterTimerHook"),
     logger=dict(type="LoggerHook", interval=1),
     param_scheduler=dict(type="ParamSchedulerHook"),
-    checkpoint=dict(type="CheckpointHook", interval=10),
+    checkpoint=dict(type="CheckpointHook", interval=1),
     sampler_seed=dict(type="DistSamplerSeedHook"),
     visualization=dict(type="Det3DVisualizationHook"),
 )
