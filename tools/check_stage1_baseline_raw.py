@@ -1,8 +1,6 @@
 import os
-from typing import List, Tuple
-
-import cv2
 import numpy as np
+import cv2
 import torch
 from mmengine.config import Config
 from mmengine.runner import load_checkpoint
@@ -12,13 +10,11 @@ from mmdet3d.utils import register_all_modules
 
 
 class ScriptArgs:
-    # TODO: 修改为你的 Stage I 配置与权重
-    config = 'projects/SeqGrowGraph/configs/seq_grow_graph/seq_grow_graph_lanediffusion.py'
-    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v4/epoch_24.pth'
-    out_dir = 'vis_stage1_lpim'
+    config = '/data/roadnet_data/lane2/mmdetection3d/projects/SeqGrowGraph/configs/seq_grow_graph/seq_grow_graph_default.py'
+    checkpoint = 'ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth'
+    out_dir = 'vis_stage1_baseline_raw'
     num_samples = 10
     random_seed = 0
-    visualize_topology = False
 
 
 def get_args():
@@ -59,35 +55,6 @@ def feature_to_rgb(feat: torch.Tensor) -> np.ndarray:
     return (proj.cpu().numpy() * 255).astype(np.uint8)
 
 
-def prepare_lpim_output(model, img, img_metas, device):
-    img = format_img(img).to(device)
-    with torch.no_grad():
-        raw_bev, _ = model.extract_feat(
-            img=img, img_metas=img_metas, skip_diffusion=True)
-        gt_centerlines = model._prepare_gt_centerlines(img_metas)
-        lpim_feat = model.lane_diffusion.lpim(raw_bev, gt_centerlines)
-    return raw_bev, lpim_feat
-
-
-def add_text(img: np.ndarray, text: str) -> np.ndarray:
-    canvas = img.copy()
-    cv2.putText(canvas, text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                (255, 255, 255), 2, cv2.LINE_AA)
-    return canvas
-
-
-def pad_to_same(images: List[np.ndarray]) -> List[np.ndarray]:
-    max_h = max(img.shape[0] for img in images)
-    max_w = max(img.shape[1] for img in images)
-    padded = []
-    for img in images:
-        if img.shape[:2] == (max_h, max_w):
-            padded.append(img)
-        else:
-            padded.append(cv2.resize(img, (max_w, max_h)))
-    return padded
-
-
 def main():
     args = get_args()
     register_all_modules()
@@ -97,8 +64,6 @@ def main():
 
     model = MODELS.build(cfg.model)
     load_checkpoint(model, args.checkpoint, map_location='cpu')
-    if model.lane_diffusion is not None:
-        model.lane_diffusion.set_stage('stage_i')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     model.eval()
@@ -116,28 +81,21 @@ def main():
         img = inputs['img']
         img_metas = [data_sample.metainfo]
 
-        raw_bev, lpim_bev = prepare_lpim_output(model, img, img_metas, device)
+        img_tensor = format_img(img).to(device)
+        with torch.no_grad():
+            raw_bev, _ = model.extract_feat(
+                img=img_tensor,
+                img_metas=img_metas,
+                skip_diffusion=True
+            )
 
         raw_vis = feature_to_rgb(raw_bev[0])
-        lpim_vis = feature_to_rgb(lpim_bev[0])
-
-        enlarged = []
-        for vis in [raw_vis, lpim_vis]:
-            vis_large = cv2.resize(vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)
-            enlarged.append(vis_large)
-
-        panels = pad_to_same([
-            add_text(enlarged[0], 'Raw BEV (LSS)'),
-            add_text(enlarged[1], 'LPIM Injected BEV')
-        ])
-
-        tile_h, tile_w = panels[0].shape[:2]
-        canvas = np.zeros((tile_h, tile_w * 2, 3), dtype=np.uint8)
-        canvas[:, :tile_w] = panels[0]
-        canvas[:, tile_w:] = panels[1]
+        raw_vis = cv2.resize(raw_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)
+        cv2.putText(raw_vis, 'Raw BEV Feature (Baseline Stage I)', (10, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
 
         save_path = os.path.join(args.out_dir, f'sample_{idx:04d}.png')
-        cv2.imwrite(save_path, canvas)
+        cv2.imwrite(save_path, raw_vis)
         print(f'Saved {save_path}')
 
 
