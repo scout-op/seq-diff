@@ -172,6 +172,7 @@ class SeqGrowGraph(MVXTwoStageDetector):
             self.freeze_pretrain()
     
     def freeze_pretrain(self):
+        print('[SeqGrowGraph] Freezing img_backbone/img_neck/view_transformers (pretrained layers)')
         for m in self.img_backbone.parameters():
             m.requires_grad=False
         for m in self.img_neck.parameters():

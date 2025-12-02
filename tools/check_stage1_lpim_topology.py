@@ -14,9 +14,9 @@ from projects.SeqGrowGraph.seq_grow_graph.core.centerline.structures import (
 
 class ScriptArgs:
     config = 'projects/SeqGrowGraph/configs/seq_grow_graph/seq_grow_graph_lanediffusion.py'
-    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_4.pth'
-    out_dir = 'vis_stage1_lpim_topology'
-    num_samples = 10
+    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_15.pth'
+    out_dir = 'vis_stage1_lpim_topology——2'
+    num_samples = 20
     random_seed = 0
 
 
@@ -174,16 +174,21 @@ def main():
             raw_vis = draw_centerlines(raw_vis, graph_gt, color=(0, 255, 0))
             lpim_vis = draw_centerlines(lpim_vis, graph_gt, color=(0, 255, 0))
 
-        raw_vis = add_text(cv2.resize(raw_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC),
-                           'Raw BEV + GT topology')
-        lpim_vis = add_text(cv2.resize(lpim_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC),
-                            'LPIM BEV + GT topology')
+        diff_map = torch.abs(lpim_bev[0] - raw_bev[0])
+        diff_vis = feature_to_rgb(diff_map)
 
-        panels = pad_to_same([raw_vis, lpim_vis])
+        raw_vis = add_text(cv2.resize(raw_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC),
+                           'Raw BEV + GT')
+        lpim_vis = add_text(cv2.resize(lpim_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC),
+                            'LPIM BEV + GT')
+        diff_vis = add_text(cv2.resize(diff_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC),
+                             '|LPIM - Raw|')
+
+        panels = pad_to_same([raw_vis, lpim_vis, diff_vis])
         tile_h, tile_w = panels[0].shape[:2]
-        canvas = np.zeros((tile_h, tile_w * 2, 3), dtype=np.uint8)
-        canvas[:, :tile_w] = panels[0]
-        canvas[:, tile_w:] = panels[1]
+        canvas = np.zeros((tile_h, tile_w * 3, 3), dtype=np.uint8)
+        for i, panel in enumerate(panels):
+            canvas[:, i * tile_w:(i + 1) * tile_w] = panel
 
         save_path = os.path.join(args.out_dir, f'sample_{idx:04d}.png')
         cv2.imwrite(save_path, canvas)

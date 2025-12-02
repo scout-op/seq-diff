@@ -53,7 +53,7 @@ model = dict(
 
 # ===== Stage I: Train LPIM =====
 model['lane_diffusion_stage'] = 'stage_i'
-# load_from = 'ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth'
+load_from = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_19.pth'
 
 # ===== Stage II: Train LPDM =====
 # model['lane_diffusion_stage'] = 'stage_ii'
@@ -94,7 +94,7 @@ optim_wrapper = dict(
 # work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_infer'
 
 # Work directory
-work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7'
+work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_bl_add_stage1'
 
 # DDP Settings
 find_unused_parameters = True
