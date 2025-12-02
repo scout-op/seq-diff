@@ -14,8 +14,8 @@ from mmdet3d.utils import register_all_modules
 class ScriptArgs:
     # TODO: 修改为你的 Stage I 配置与权重
     config = 'projects/SeqGrowGraph/configs/seq_grow_graph/seq_grow_graph_lanediffusion.py'
-    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v4/epoch_24.pth'
-    out_dir = 'vis_stage1_lpim'
+    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_2.pth'
+    out_dir = 'vis_stage1_lpim_4_2'
     num_samples = 10
     random_seed = 0
     visualize_topology = False

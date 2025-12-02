@@ -227,6 +227,8 @@ class ModifiedBevEncode(nn.Module):
         Returns:
             out: [B, outC, H, W] - prior-injected BEV features
         """
+        identity = x
+
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -243,6 +245,9 @@ class ModifiedBevEncode(nn.Module):
         
         x = self.up1(x, x1)
         x = self.up2(x)
+
+        # Residual injection: retain original BEV information
+        x = x + identity
         
         return x
 

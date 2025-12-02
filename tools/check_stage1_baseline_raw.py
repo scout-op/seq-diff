@@ -10,9 +10,9 @@ from mmdet3d.utils import register_all_modules
 
 
 class ScriptArgs:
-    config = '/data/roadnet_data/lane2/mmdetection3d/projects/SeqGrowGraph/configs/seq_grow_graph/seq_grow_graph_default.py'
-    checkpoint = 'ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth'
-    out_dir = 'vis_stage1_baseline_raw'
+    config = '/data/roadnet_data/lane2/mmdetection3d/projects/SeqGrowGraph/configs/road_seg/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.py'
+    checkpoint = '/data/roadnet_data/lane2/mmdetection3d/ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth'
+    out_dir = 'vis_stage1_baseline_raw_4'
     num_samples = 10
     random_seed = 0
 
@@ -29,6 +29,24 @@ def format_img(img: torch.Tensor) -> torch.Tensor:
     if img.dim() == 3:
         return img.unsqueeze(0).unsqueeze(0)
     raise ValueError(f'Unexpected img shape: {tuple(img.shape)}')
+
+
+def get_raw_bev(model, img_tensor, img_metas):
+    try:
+        out = model.extract_feat(img=img_tensor, img_metas=img_metas, skip_diffusion=True)
+    except TypeError:
+        try:
+            out = model.extract_feat(img=img_tensor, img_metas=img_metas)
+        except TypeError:
+            out = model.extract_feat(img_tensor, img_metas)
+
+    if torch.is_tensor(out):
+        return out
+    if isinstance(out, (list, tuple)):
+        for item in out:
+            if torch.is_tensor(item) and item.dim() == 4:
+                return item
+    raise RuntimeError('Unable to locate BEV tensor from extract_feat output.')
 
 
 def feature_to_rgb(feat: torch.Tensor) -> np.ndarray:
@@ -83,11 +101,7 @@ def main():
 
         img_tensor = format_img(img).to(device)
         with torch.no_grad():
-            raw_bev, _ = model.extract_feat(
-                img=img_tensor,
-                img_metas=img_metas,
-                skip_diffusion=True
-            )
+            raw_bev = get_raw_bev(model, img_tensor, img_metas)
 
         raw_vis = feature_to_rgb(raw_bev[0])
         raw_vis = cv2.resize(raw_vis, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)

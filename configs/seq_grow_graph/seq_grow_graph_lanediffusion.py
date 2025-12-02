@@ -9,6 +9,7 @@ _base_ = ['./seq_grow_graph_default.py']
 model = dict(
     type='SeqGrowGraph',
     use_lane_diffusion=True,
+    freeze_pretrain=True,
     
     # LaneDiffusion stage: 'stage_i', 'stage_ii', 'stage_iii', or 'inference'
     lane_diffusion_stage='inference',  # Change this for different training stages
@@ -52,8 +53,7 @@ model = dict(
 
 # ===== Stage I: Train LPIM =====
 model['lane_diffusion_stage'] = 'stage_i'
-# # You may want to freeze the decoder in this stage
-# # Or train it jointly with LPIM
+# load_from = 'ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth'
 
 # ===== Stage II: Train LPDM =====
 # model['lane_diffusion_stage'] = 'stage_ii'
@@ -67,12 +67,11 @@ model['lane_diffusion_stage'] = 'stage_i'
 
 # ===== Inference =====
 # model['lane_diffusion_stage'] = 'inference'
-# # Load your best Stage III checkpoint here
-# load_from = "/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s3_v4/epoch_10.pth"  # Update XX to your best epoch
+# load_from = "/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s3_v4/epoch_10.pth"
 
 # You may need to adjust batch size depending on GPU memory
 train_dataloader = dict(
-    batch_size=96,  # Reduced from 18 due to LaneDiffusion memory usage
+    batch_size=64,  # Reduced from 18 due to LaneDiffusion memory usage
 )
 
 val_dataloader = dict(
@@ -95,7 +94,7 @@ optim_wrapper = dict(
 # work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_infer'
 
 # Work directory
-work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s2_v6'
+work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7'
 
 # DDP Settings
 find_unused_parameters = True
