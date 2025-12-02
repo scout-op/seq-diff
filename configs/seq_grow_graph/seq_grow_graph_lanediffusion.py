@@ -51,14 +51,14 @@ model = dict(
 # Uncomment the appropriate section based on your training stage
 
 # ===== Stage I: Train LPIM =====
-# model['lane_diffusion_stage'] = 'stage_i'
+model['lane_diffusion_stage'] = 'stage_i'
 # # You may want to freeze the decoder in this stage
 # # Or train it jointly with LPIM
 
 # ===== Stage II: Train LPDM =====
-model['lane_diffusion_stage'] = 'stage_ii'
-# Load Stage I checkpoint here
-load_from = "/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s2_v6/epoch_5.pth"
+# model['lane_diffusion_stage'] = 'stage_ii'
+# # Load Stage I checkpoint here
+# load_from = "/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s2_v6/epoch_5.pth"
 
 # ===== Stage III: Train Decoder with enhanced features =====
 # model['lane_diffusion_stage'] = 'stage_iii'
