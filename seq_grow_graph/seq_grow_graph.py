@@ -125,6 +125,12 @@ class SeqGrowGraph(MVXTwoStageDetector):
                 'bev_h': bev_h,
                 'bev_w': bev_w,
             })
+
+            # ensure LPIM aware of coordinate range
+            lpim_cfg = lane_diffusion_cfg.get('lpim_config', {})
+            if grid_conf is not None:
+                lpim_cfg.setdefault('grid_conf', grid_conf)
+            lane_diffusion_cfg['lpim_config'] = lpim_cfg
             
             self.lane_diffusion = LaneDiffusion(**lane_diffusion_cfg)
             self.lane_diffusion.set_stage(lane_diffusion_stage)
@@ -628,9 +634,13 @@ class SeqGrowGraph(MVXTwoStageDetector):
 
     def simple_test(self, img_metas, img=None):
         """Test function without augmentaiton."""
-        
-        # Extract features (and seg_mask if available)
-        bev_feats, seg_mask = self.extract_feat(img=img, img_metas=img_metas)
+        gt_centerlines = None
+        if self.use_lane_diffusion and self.lane_diffusion is not None:
+            if self.lane_diffusion.current_stage == 'stage_i':
+                gt_centerlines = self._prepare_gt_centerlines(img_metas)
+
+        bev_feats, seg_mask = self.extract_feat(
+            img=img, img_metas=img_metas, gt_centerlines=gt_centerlines)
         
         # Check for cyclic refinement
         use_cyclic = False

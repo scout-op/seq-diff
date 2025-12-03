@@ -12,9 +12,11 @@ from typing import List, Dict
 
 class ContinuousPositionEmbedding(nn.Module):
     """Continuous position embedding using MLP for lane coordinates"""
-    def __init__(self, d_model=256):
+    def __init__(self, d_model=256, range_x=50.0, range_y=50.0):
         super().__init__()
         self.d_model = d_model
+        self.range_x = range_x
+        self.range_y = range_y
         
         # MLP for coordinate embedding
         self.mlp = nn.Sequential(
@@ -31,9 +33,9 @@ class ContinuousPositionEmbedding(nn.Module):
             embeddings: [B, M, N, d_model]
         """
         # Normalize coordinates to roughly [-1, 1] or [0, 1] range
-        # Assuming input is in range [-50, 50]
-        coords_norm = coords / 50.0
-        
+        range_tensor = coords.new_tensor([self.range_x, self.range_y])
+        coords_norm = coords / range_tensor
+
         embeddings = self.mlp(coords_norm)
         
         return embeddings
@@ -83,12 +85,14 @@ class PriorEncoder(nn.Module):
         dim_feedforward=1024,
         dropout=0.1,
         max_points=100,
+        range_x=50.0,
+        range_y=50.0,
     ):
         super().__init__()
         self.d_model = d_model
         
         # Continuous position embedding (MLP)
-        self.pos_embed = ContinuousPositionEmbedding(d_model)
+        self.pos_embed = ContinuousPositionEmbedding(d_model, range_x=range_x, range_y=range_y)
         
         # Transformer encoder layers
         self.layers = nn.ModuleList([
@@ -218,6 +222,10 @@ class ModifiedBevEncode(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, outC, kernel_size=1, padding=0),
         )
+        # Zero-init final conv to preserve identity at start
+        nn.init.zeros_(self.up2[-1].weight)
+        if self.up2[-1].bias is not None:
+            nn.init.zeros_(self.up2[-1].bias)
     
     def forward(self, x, prior_features):
         """
@@ -282,6 +290,7 @@ class LPIM(nn.Module):
         num_heads=8,
         max_lanes=50,
         max_points_per_lane=20,
+        grid_conf=None,
     ):
         super().__init__()
         self.bev_channels = bev_channels
@@ -290,11 +299,20 @@ class LPIM(nn.Module):
         self.max_points_per_lane = max_points_per_lane
         
         # Prior Encoder
+        coord_range_x = 50.0
+        coord_range_y = 50.0
+        if grid_conf is not None:
+            if 'xbound' in grid_conf:
+                coord_range_x = abs(grid_conf['xbound'][0])
+            if 'ybound' in grid_conf:
+                coord_range_y = abs(grid_conf['ybound'][0])
         self.prior_encoder = PriorEncoder(
             d_model=prior_dim,
             nhead=num_heads,
             num_layers=num_encoder_layers,
             max_points=max_points_per_lane,
+            range_x=coord_range_x,
+            range_y=coord_range_y,
         )
         
         # Modified BEV Constructor

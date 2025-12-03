@@ -14,8 +14,8 @@ from projects.SeqGrowGraph.seq_grow_graph.core.centerline.structures import (
 
 class ScriptArgs:
     config = 'projects/SeqGrowGraph/configs/seq_grow_graph/seq_grow_graph_lanediffusion.py'
-    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_15.pth'
-    out_dir = 'vis_stage1_lpim_topology——2'
+    checkpoint = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_100.pth'
+    out_dir = 'vis_stage1_lpim_topology——3'
     num_samples = 20
     random_seed = 0
 
