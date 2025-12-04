@@ -356,6 +356,19 @@ class SeqGrowGraph(MVXTwoStageDetector):
                 seg_mask = F.interpolate(seg_mask, (int(h * self.bev_scale), int(w * self.bev_scale)))
         
         losses = dict()
+
+        # Stage I auxiliary mask loss (LPIM supervision)
+        if self.use_lane_diffusion and self.lane_diffusion is not None:
+            if self.lane_diffusion.current_stage == 'stage_i':
+                aux_mask = self._prepare_gt_mask(
+                    img_metas,
+                    img_feats_shape=bev_feats.shape[-2:],
+                    device=bev_feats.device)
+                mask_pred = self.lane_diffusion.lpdm.seg_head(bev_feats)
+                if aux_mask.shape[-2:] != mask_pred.shape[-2:]:
+                    aux_mask = F.interpolate(aux_mask.float(), size=mask_pred.shape[-2:], mode='nearest')
+                losses['loss_lpim_aux'] = F.binary_cross_entropy_with_logits(
+                    mask_pred, aux_mask.float())
         
         # Handle Stage II (LPDM training) separately
         if self.use_lane_diffusion and self.lane_diffusion is not None:

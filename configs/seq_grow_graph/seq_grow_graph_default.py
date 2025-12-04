@@ -12,7 +12,7 @@ load_from = "ckpts/lss_roadseg_48x32_b4x8_resnet_adam_24e_default.pth"
 data_root = "./data/nuscenes/"
 work_dir="work_dirs/seq_grow_graph"
 # vis_dir = "seq_grow_graph_s3_v3_ep10"
-vis_dir = "lpim_yanzhen_3"
+vis_dir = "lpim_yanzhen_4"
 
 # resume= True 
 transformer_dims = 256

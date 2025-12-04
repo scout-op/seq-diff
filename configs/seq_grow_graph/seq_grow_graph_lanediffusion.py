@@ -8,7 +8,7 @@ _base_ = ['./seq_grow_graph_default.py']
 # Enable LaneDiffusion
 model = dict(
     type='SeqGrowGraph',
-    use_lane_diffusion=True,
+    use_lane_diffusion=False,
     freeze_pretrain=True,
     
     # LaneDiffusion stage: 'stage_i', 'stage_ii', 'stage_iii', or 'inference'
@@ -53,7 +53,7 @@ model = dict(
 
 # ===== Stage I: Train LPIM =====
 model['lane_diffusion_stage'] = 'stage_i'
-load_from = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v7/epoch_130.pth'
+# load_from = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v8/epoch_5.pth'
 # load_from = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_bl_add_stage1/epoch_76.pth'
 
 # ===== Stage II: Train LPDM =====
@@ -95,8 +95,8 @@ optim_wrapper = dict(
 # work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_infer'
 
 # Work directory
-work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_bl_add_stage1'
-# work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v8'
+# work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_bl_add_stage1'
+work_dir = '/mnt/tf-mdriver-jfs/exps/lixiangjie/roadnet/data_copy/lane2/work_dirs/seq_grow_graph_lanediffusion_s1_v9'
 # DDP Settings
 find_unused_parameters = True
 
